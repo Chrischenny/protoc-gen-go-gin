@@ -7,7 +7,6 @@ func Register{{ $.InterfaceName }}(r gin.IRouter, srv {{ $.InterfaceName }}) {
 	s := {{.Name}}{
 		server: srv,
 		router:     r,
-		resp: default{{$.Name}}Resp{},
 	}
 	s.RegisterService()
 }
@@ -49,7 +48,7 @@ func (s *{{$.Name}}) {{ .HandlerName }} (ctx *gin.Context) {
 	newCtx := metadata.NewIncomingContext(ctx, md)
 	out, err := s.server.({{ $.InterfaceName }}).{{.Name}}(newCtx, &in)
 	if err != nil {
-		s.resp.Error(ctx, err)
+		ctx.Error(err)
 		return
 	}
 
