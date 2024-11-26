@@ -13,7 +13,7 @@ func Register{{ $.InterfaceName }}(server *http.Server, service {{ $.InterfaceNa
 
 type {{$.Name}} struct {
 	server http.Server
-	router gin.IRouter
+	service {{ $.InterfaceName }}
 }
 
 {{range .Methods}}
