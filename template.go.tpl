@@ -12,7 +12,7 @@ func Register{{ $.InterfaceName }}(server *http.Server, service {{ $.InterfaceNa
 }
 
 type {{$.Name}} struct {
-	server http.Server
+	server *http.Server
 	service {{ $.InterfaceName }}
 }
 
