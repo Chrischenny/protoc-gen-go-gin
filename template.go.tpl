@@ -51,7 +51,7 @@ func (s *{{$.Name}}) {{ .HandlerName }} (ctx *gin.Context) {
 	})
 	
 	out, err := h(newCtx, &in)
-	data, code, err := server.HandleResponse(ctx, out, err)
+	data, code, err := s.server.HandleResponse(ctx, out, err)
 	if err != nil {
 		ctx.String(500, "Internal Server Error" + err.Error())
 		return
