@@ -3,15 +3,17 @@ type {{ $.InterfaceName }} interface {
 	{{.Name}}(context.Context, *{{.Request}}) (*{{.Reply}}, error)
 {{end}}
 }
-func Register{{ $.InterfaceName }}(server *http.Server, service {{ $.InterfaceName }}) {
+func Register{{ $.InterfaceName }}(router *http.Router, server *http.Server, service {{ $.InterfaceName }}) {
 	s := {{.Name}}{
 		server:  server,
 		service: service,
+		router: router
 	}
 	s.RegisterService()
 }
 
 type {{$.Name}} struct {
+	router *http.Router
 	server *http.Server
 	service {{ $.InterfaceName }}
 }
@@ -37,8 +39,7 @@ func (s *{{$.Name}}) {{ .HandlerName }} (ctx http.Context) {
 {{end}}
 
 func (s *{{$.Name}}) RegisterService() {
-		r := s.server.Router()
 {{range .Methods}}
-		r.Handle("{{.Method}}", "{{.Path}}", s.{{ .HandlerName }})
+		s.router.Handle("{{.Method}}", "{{.Path}}", s.{{ .HandlerName }})
 {{end}}
 }
