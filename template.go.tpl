@@ -3,7 +3,7 @@ type {{ $.InterfaceName }} interface {
 	{{.Name}}(context.Context, *{{.Request}}) (*{{.Reply}}, error)
 {{end}}
 }
-func Register{{ $.InterfaceName }}(r gin.IRouter, srv {{ $.InterfaceName }}) {
+func Register{{ $.InterfaceName }}(r gin.IRouter, srv http.Server) {
 	s := {{.Name}}{
 		server: srv,
 		router:     r,
@@ -11,8 +11,8 @@ func Register{{ $.InterfaceName }}(r gin.IRouter, srv {{ $.InterfaceName }}) {
 	s.RegisterService()
 }
 
-type {{$.Name}} struct{
-	server {{ $.InterfaceName }}
+type {{$.Name}} struct {
+	server http.Server
 	router gin.IRouter
 }
 
@@ -46,13 +46,17 @@ func (s *{{$.Name}}) {{ .HandlerName }} (ctx *gin.Context) {
 		md.Set(k, v...)
 	}
 	newCtx := metadata.NewIncomingContext(ctx.Request.Context(), md)
-	out, err := s.server.({{ $.InterfaceName }}).{{.Name}}(newCtx, &in)
+	h := s.server.Middlware(func(ctx context.Context, req interface{}) (interface{}, error) {
+		return s.server.({{ $.InterfaceName }}).{{.Name}}(ctx, req.(*{{.Request}}))
+	})
+	
+	out, err := h(newCtx, &in)
+	data, code, err := server.HandleResponse(ctx, out, err)
 	if err != nil {
-		ctx.Error(err)
+		ctx.String(500, "Internal Server Error" + err.Error())
 		return
 	}
-
-	ctx.Set("data", out)
+	ctx.String(code, data)
 	return
 }
 {{end}}
