@@ -3,10 +3,10 @@ type {{ $.InterfaceName }} interface {
 	{{.Name}}(context.Context, *{{.Request}}) (*{{.Reply}}, error)
 {{end}}
 }
-func Register{{ $.InterfaceName }}(r gin.IRouter, srv http.Server) {
+func Register{{ $.InterfaceName }}(server *http.Server, service {{ $.InterfaceName }}) {
 	s := {{.Name}}{
-		server: srv,
-		router:     r,
+		server:  server,
+		service: service,
 	}
 	s.RegisterService()
 }
@@ -17,52 +17,28 @@ type {{$.Name}} struct {
 }
 
 {{range .Methods}}
-func (s *{{$.Name}}) {{ .HandlerName }} (ctx *gin.Context) {
+func (s *{{$.Name}}) {{ .HandlerName }} (ctx http.Context) {
 	var in {{.Request}}
-{{if .HasPathParams }}
-	if err := ctx.ShouldBindUri(&in); err != nil {
-		ctx.Error(err)
+	if err := ctx.Bind(&in); err != nil {
+		ctx.Result(400, nil, err)
 		return
 	}
-{{end}}
-{{if eq .Method "GET" "DELETE" }}
-	if err := ctx.ShouldBindQuery(&in); err != nil {
-		ctx.Error(err)
+	if err := ctx.BindQuery(&in); err != nil {
+		ctx.Result(400, nil, err)
 		return
 	}
-{{else if eq .Method "POST" "PUT" }}
-	if err := ctx.ShouldBindJSON(&in); err != nil {
-		ctx.Error(err)
-		return
-	}
-{{else}}
-	if err := ctx.ShouldBind(&in); err != nil {
-		ctx.Error(err)
-		return
-	}
-{{end}}
-	md := metadata.New(nil)
-	for k, v := range ctx.Request.Header {
-		md.Set(k, v...)
-	}
-	newCtx := metadata.NewIncomingContext(ctx.Request.Context(), md)
 	h := s.server.Middlware(func(ctx context.Context, req interface{}) (interface{}, error) {
-		return s.server.({{ $.InterfaceName }}).{{.Name}}(ctx, req.(*{{.Request}}))
+		return s.service.({{ $.InterfaceName }}).{{.Name}}(ctx, req.(*{{.Request}}))
 	})
 	
-	out, err := h(newCtx, &in)
-	data, code, err := s.server.HandleResponse(ctx, out, err)
-	if err != nil {
-		ctx.String(500, "Internal Server Error" + err.Error())
-		return
-	}
-	ctx.String(code, data)
-	return
+	out, err := h(ctx, &in)
+	ctx.Result(200, out, err)
 }
 {{end}}
 
 func (s *{{$.Name}}) RegisterService() {
+		r := s.server.Router()
 {{range .Methods}}
-		s.router.Handle("{{.Method}}", "{{.Path}}", s.{{ .HandlerName }})
+		r.Handle("{{.Method}}", "{{.Path}}", s.{{ .HandlerName }})
 {{end}}
 }
