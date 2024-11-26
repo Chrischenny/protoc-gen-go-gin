@@ -7,7 +7,7 @@ func Register{{ $.InterfaceName }}(router *http.Router, server *http.Server, ser
 	s := {{.Name}}{
 		server:  server,
 		service: service,
-		router: router
+		router: router,
 	}
 	s.RegisterService()
 }
