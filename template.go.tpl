@@ -3,9 +3,8 @@ type {{ $.InterfaceName }} interface {
 	{{.Name}}(context.Context, *{{.Request}}) (*{{.Reply}}, error)
 {{end}}
 }
-func Register{{ $.InterfaceName }}(router *http.Router, server *http.Server, service {{ $.InterfaceName }}) {
+func Register{{ $.InterfaceName }}(router *http.Router, service {{ $.InterfaceName }}) {
 	s := {{.Name}}{
-		server:  server,
 		service: service,
 		router: router,
 	}
@@ -14,7 +13,6 @@ func Register{{ $.InterfaceName }}(router *http.Router, server *http.Server, ser
 
 type {{$.Name}} struct {
 	router *http.Router
-	server *http.Server
 	service {{ $.InterfaceName }}
 }
 
@@ -27,7 +25,7 @@ func (s *{{$.Name}}) {{ .HandlerName }} (ctx http.Context) error {
 	if err := ctx.BindQuery(&in); err != nil {
 		return ctx.Result(400, nil, err)
 	}
-	h := s.server.Middlware(func(ctx context.Context, req interface{}) (interface{}, error) {
+	h := s.router.Middlware(func(ctx context.Context, req interface{}) (interface{}, error) {
 		return s.service.({{ $.InterfaceName }}).{{.Name}}(ctx, req.(*{{.Request}}))
 	})
 	
