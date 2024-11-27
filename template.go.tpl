@@ -19,22 +19,20 @@ type {{$.Name}} struct {
 }
 
 {{range .Methods}}
-func (s *{{$.Name}}) {{ .HandlerName }} (ctx http.Context) {
+func (s *{{$.Name}}) {{ .HandlerName }} (ctx http.Context) error {
 	var in {{.Request}}
 	if err := ctx.Bind(&in); err != nil {
-		ctx.Result(400, nil, err)
-		return
+		return ctx.Result(400, nil, err)
 	}
 	if err := ctx.BindQuery(&in); err != nil {
-		ctx.Result(400, nil, err)
-		return
+		return ctx.Result(400, nil, err)
 	}
 	h := s.server.Middlware(func(ctx context.Context, req interface{}) (interface{}, error) {
 		return s.service.({{ $.InterfaceName }}).{{.Name}}(ctx, req.(*{{.Request}}))
 	})
 	
 	out, err := h(ctx, &in)
-	ctx.Result(200, out, err)
+	return ctx.Result(200, out, err)
 }
 {{end}}
 
