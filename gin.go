@@ -16,7 +16,7 @@ const (
 	// ginPkg     = protogen.GoImportPath("github.com/gin-gonic/gin")
 	// errPkg             = protogen.GoImportPath("errors")
 	// metadataPkg        = protogen.GoImportPath("google.golang.org/grpc/metadata")
-	httpServerPkg      = protogen.GoImportPath("goskeleton/app/transport/http")
+	httpServerPkg      = protogen.GoImportPath("goskeleton/wwlms/transport/http")
 	deprecationComment = "// Deprecated: Do not use."
 )
 
